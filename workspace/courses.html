@@ -1,0 +1,1437 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ML 프로젝트 과정 — 코드캠프</title>
+  <style>
+    /* ===== Reset & Base ===== */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background: var(--clr-bg);
+      color: #e2e8f0;
+      line-height: 1.6;
+      overflow-x: hidden;
+    }
+
+    /* ===== CSS Custom Properties ===== */
+    :root {
+      --clr-primary: #6C63FF;
+      --clr-accent: #06B6D4;
+      --clr-accent-warm: #F59E0B;
+      --clr-bg: #0F0F1A;
+      --clr-bg-card: #1A1A2E;
+      --clr-text: #e2e8f0;
+      --clr-muted: #94a3b8;
+      --radius: 12px;
+      --shadow: 0 4px 24px rgba(0,0,0,0.4);
+      --transition: 0.3s ease;
+    }
+
+    /* ===== Utility ===== */
+    .container { max-width: 1160px; margin: 0 auto; padding: 0 24px; }
+    .section-title {
+      font-size: clamp(1.8rem, 4vw, 2.6rem);
+      font-weight: 700;
+      text-align: center;
+      margin-bottom: 0.5rem;
+    }
+    .section-sub {
+      text-align: center;
+      color: var(--clr-muted);
+      font-size: 1.05rem;
+      margin-bottom: 3.5rem;
+    }
+    .badge {
+      display: inline-block;
+      background: rgba(108,99,255,0.18);
+      border: 1px solid rgba(108,99,255,0.4);
+      color: #a5b4fc;
+      font-size: 0.8rem;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      padding: 4px 14px;
+      border-radius: 50px;
+      text-transform: uppercase;
+    }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 14px 32px;
+      border-radius: 50px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      text-decoration: none;
+      transition: transform var(--transition), box-shadow var(--transition), background var(--transition);
+    }
+    .btn:hover { transform: translateY(-2px); }
+    .btn-primary {
+      background: linear-gradient(135deg, var(--clr-primary), #8B5CF6);
+      color: #fff;
+      box-shadow: 0 4px 20px rgba(108,99,255,0.45);
+    }
+    .btn-primary:hover { box-shadow: 0 6px 28px rgba(108,99,255,0.65); }
+    .btn-outline {
+      background: transparent;
+      color: #fff;
+      border: 2px solid rgba(255,255,255,0.3);
+    }
+    .btn-outline:hover { background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.6); }
+
+    /* ===== Reveal Animation ===== */
+    .reveal {
+      opacity: 0;
+      transform: translateY(30px);
+      transition: opacity 0.7s ease, transform 0.7s ease;
+    }
+    .reveal.visible { opacity: 1; transform: translateY(0); }
+    .reveal-delay-1 { transition-delay: 0.1s; }
+    .reveal-delay-2 { transition-delay: 0.2s; }
+    .reveal-delay-3 { transition-delay: 0.3s; }
+    .reveal-delay-4 { transition-delay: 0.4s; }
+
+    /* ===== Navigation ===== */
+    .nav {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 100;
+      padding: 18px 0;
+      transition: padding var(--transition), background var(--transition), box-shadow var(--transition);
+    }
+    .nav.scrolled {
+      padding: 12px 0;
+      background: rgba(15,15,26,0.85);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      box-shadow: 0 2px 24px rgba(0,0,0,0.5);
+    }
+    .nav__inner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .nav__logo {
+      font-size: 1.4rem;
+      font-weight: 800;
+      text-decoration: none;
+      background: linear-gradient(135deg, var(--clr-primary), var(--clr-accent));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .nav__links {
+      display: flex;
+      align-items: center;
+      gap: 36px;
+      list-style: none;
+    }
+    .nav__links a {
+      color: var(--clr-muted);
+      text-decoration: none;
+      font-size: 0.95rem;
+      font-weight: 500;
+      transition: color var(--transition);
+    }
+    .nav__links a:hover { color: #fff; }
+    .nav__links a.active { color: #fff; }
+    .nav__cta { margin-left: 12px; padding: 10px 22px; font-size: 0.9rem; }
+    .nav__hamburger {
+      display: none;
+      flex-direction: column;
+      gap: 5px;
+      cursor: pointer;
+      background: none;
+      border: none;
+      padding: 4px;
+    }
+    .nav__hamburger span {
+      display: block;
+      width: 24px;
+      height: 2px;
+      background: #fff;
+      border-radius: 2px;
+      transition: transform var(--transition), opacity var(--transition);
+    }
+    .nav__hamburger.active span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+    .nav__hamburger.active span:nth-child(2) { opacity: 0; }
+    .nav__hamburger.active span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+
+    /* ===== Mobile Nav ===== */
+    .nav__mobile {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(15,15,26,0.97);
+      z-index: 99;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 36px;
+    }
+    .nav__mobile.open { display: flex; }
+    .nav__mobile a {
+      color: #fff;
+      text-decoration: none;
+      font-size: 1.6rem;
+      font-weight: 700;
+      transition: color var(--transition);
+    }
+    .nav__mobile a:hover { color: var(--clr-primary); }
+
+    /* ===== Hero ===== */
+    .hero {
+      min-height: 70vh;
+      display: flex;
+      align-items: center;
+      position: relative;
+      overflow: hidden;
+      padding: 140px 0 80px;
+    }
+    .hero__bg {
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse 80% 60% at 60% 30%, rgba(108,99,255,0.15) 0%, transparent 70%),
+                  radial-gradient(ellipse 50% 50% at 20% 70%, rgba(6,182,212,0.1) 0%, transparent 60%);
+    }
+    .hero__orb {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(80px);
+      pointer-events: none;
+    }
+    .hero__orb--1 {
+      width: 500px; height: 500px;
+      background: radial-gradient(circle, rgba(108,99,255,0.2) 0%, transparent 70%);
+      top: -100px; right: -80px;
+    }
+    .hero__orb--2 {
+      width: 300px; height: 300px;
+      background: radial-gradient(circle, rgba(6,182,212,0.15) 0%, transparent 70%);
+      bottom: 0; left: 5%;
+    }
+    .hero__content {
+      position: relative;
+      z-index: 2;
+      max-width: 720px;
+    }
+    .hero__badge { margin-bottom: 1.4rem; }
+    .hero__title {
+      font-size: clamp(2rem, 5vw, 3.4rem);
+      font-weight: 800;
+      line-height: 1.15;
+      margin-bottom: 1.2rem;
+      letter-spacing: -0.02em;
+    }
+    .hero__title span {
+      background: linear-gradient(135deg, var(--clr-primary), var(--clr-accent));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .hero__desc {
+      font-size: 1.1rem;
+      color: var(--clr-muted);
+      margin-bottom: 2.4rem;
+      max-width: 580px;
+      line-height: 1.8;
+    }
+    .hero__meta {
+      display: flex;
+      gap: 24px;
+      flex-wrap: wrap;
+      margin-bottom: 2.4rem;
+    }
+    .hero__meta-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.92rem;
+      color: var(--clr-muted);
+    }
+    .hero__meta-item strong { color: #e2e8f0; }
+
+    /* ===== AI Evolution Timeline ===== */
+    .timeline-section { padding: 100px 0; background: var(--clr-bg-card); }
+    .timeline {
+      display: flex;
+      align-items: stretch;
+      gap: 0;
+      margin-top: 3rem;
+      overflow-x: auto;
+      padding-bottom: 8px;
+    }
+    .timeline__item {
+      flex: 1;
+      min-width: 180px;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+    }
+    .timeline__item:not(:last-child)::after {
+      content: '→';
+      position: absolute;
+      right: -12px;
+      top: 28px;
+      font-size: 1.4rem;
+      color: rgba(108,99,255,0.5);
+      z-index: 1;
+    }
+    .timeline__dot {
+      width: 56px; height: 56px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+      margin-bottom: 16px;
+      border: 2px solid rgba(255,255,255,0.1);
+      flex-shrink: 0;
+    }
+    .timeline__era {
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--clr-muted);
+      margin-bottom: 6px;
+    }
+    .timeline__name {
+      font-size: 1rem;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+    .timeline__desc {
+      font-size: 0.82rem;
+      color: var(--clr-muted);
+      line-height: 1.6;
+      padding: 0 8px;
+    }
+    .timeline__highlight { color: var(--clr-accent); font-weight: 600; }
+
+    /* ===== Roadmap Steps ===== */
+    .roadmap { padding: 100px 0; }
+    .roadmap__grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 24px;
+    }
+    .step-card {
+      background: var(--clr-bg-card);
+      border: 1px solid rgba(255,255,255,0.07);
+      border-radius: var(--radius);
+      padding: 32px 24px;
+      text-align: center;
+      position: relative;
+      transition: transform var(--transition), border-color var(--transition), box-shadow var(--transition);
+    }
+    .step-card:hover {
+      transform: translateY(-6px);
+      border-color: rgba(108,99,255,0.4);
+      box-shadow: 0 16px 40px rgba(0,0,0,0.4);
+    }
+    .step-card__number {
+      font-size: 0.72rem;
+      font-weight: 800;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--clr-primary);
+      margin-bottom: 12px;
+    }
+    .step-card__icon {
+      font-size: 2.6rem;
+      margin-bottom: 16px;
+      display: block;
+    }
+    .step-card__title {
+      font-size: 1rem;
+      font-weight: 700;
+      margin-bottom: 10px;
+    }
+    .step-card__goal {
+      font-size: 0.85rem;
+      color: var(--clr-muted);
+      line-height: 1.6;
+    }
+    .step-card__tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      justify-content: center;
+      margin-top: 14px;
+    }
+    .step-tag {
+      font-size: 0.72rem;
+      font-weight: 600;
+      padding: 2px 9px;
+      border-radius: 50px;
+      background: rgba(108,99,255,0.15);
+      color: #a5b4fc;
+      border: 1px solid rgba(108,99,255,0.25);
+    }
+
+    /* ===== Curriculum Tabs ===== */
+    .curriculum { padding: 100px 0; background: linear-gradient(180deg, transparent, rgba(108,99,255,0.04), transparent); }
+    .tabs {
+      display: flex;
+      gap: 8px;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin-bottom: 40px;
+    }
+    .tab-btn {
+      padding: 10px 24px;
+      border-radius: 50px;
+      border: 1px solid rgba(255,255,255,0.12);
+      background: transparent;
+      color: var(--clr-muted);
+      font-size: 0.92rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all var(--transition);
+    }
+    .tab-btn:hover { border-color: rgba(108,99,255,0.5); color: #fff; }
+    .tab-btn.active {
+      background: linear-gradient(135deg, var(--clr-primary), #8B5CF6);
+      border-color: transparent;
+      color: #fff;
+      box-shadow: 0 4px 16px rgba(108,99,255,0.4);
+    }
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+    .curriculum__table-wrap {
+      background: var(--clr-bg-card);
+      border: 1px solid rgba(255,255,255,0.07);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    thead th {
+      background: rgba(108,99,255,0.12);
+      padding: 14px 20px;
+      text-align: left;
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: #a5b4fc;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+    tbody tr {
+      border-top: 1px solid rgba(255,255,255,0.05);
+      transition: background var(--transition);
+    }
+    tbody tr:hover { background: rgba(255,255,255,0.03); }
+    tbody td {
+      padding: 14px 20px;
+      font-size: 0.9rem;
+      color: var(--clr-muted);
+      vertical-align: top;
+    }
+    tbody td:first-child {
+      font-weight: 700;
+      color: var(--clr-accent);
+      white-space: nowrap;
+      width: 80px;
+    }
+    tbody td:nth-child(2) { color: #e2e8f0; font-weight: 600; }
+    .topic-tag {
+      display: inline-block;
+      font-size: 0.72rem;
+      font-weight: 600;
+      padding: 2px 8px;
+      border-radius: 4px;
+      margin-top: 4px;
+      background: rgba(6,182,212,0.15);
+      color: #67e8f9;
+    }
+
+    /* ===== Project Examples ===== */
+    .projects { padding: 100px 0; }
+    .projects__grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 32px;
+    }
+    .project-card {
+      background: var(--clr-bg-card);
+      border: 1px solid rgba(255,255,255,0.07);
+      border-radius: var(--radius);
+      overflow: hidden;
+      transition: transform var(--transition), border-color var(--transition);
+    }
+    .project-card:hover { transform: translateY(-6px); border-color: rgba(108,99,255,0.35); }
+    .project-card__preview {
+      height: 200px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      overflow: hidden;
+    }
+    .project-card__preview--churn {
+      background: linear-gradient(135deg, #0c1a2e, #0e4a6e);
+    }
+    .project-card__preview--obesity {
+      background: linear-gradient(135deg, #0a2218, #0d5c3a);
+    }
+    .project-card__mockup {
+      width: 85%;
+      background: rgba(0,0,0,0.4);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 8px;
+      padding: 16px;
+    }
+    .mockup__bar-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+    .mockup__bar-label {
+      font-size: 0.7rem;
+      color: var(--clr-muted);
+      width: 70px;
+      flex-shrink: 0;
+    }
+    .mockup__bar-track {
+      flex: 1;
+      height: 8px;
+      background: rgba(255,255,255,0.08);
+      border-radius: 4px;
+      overflow: hidden;
+    }
+    .mockup__bar-fill {
+      height: 100%;
+      border-radius: 4px;
+    }
+    .mockup__bar-fill--blue  { background: linear-gradient(90deg, #06B6D4, #6C63FF); }
+    .mockup__bar-fill--green { background: linear-gradient(90deg, #10b981, #06B6D4); }
+    .mockup__bar-fill--amber { background: linear-gradient(90deg, #F59E0B, #ef4444); }
+    .mockup__title {
+      font-size: 0.72rem;
+      font-weight: 700;
+      color: var(--clr-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      margin-bottom: 12px;
+    }
+    .project-card__body { padding: 28px; }
+    .project-card__step {
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: var(--clr-primary);
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+    .project-card__title {
+      font-size: 1.2rem;
+      font-weight: 700;
+      margin-bottom: 10px;
+    }
+    .project-card__desc {
+      color: var(--clr-muted);
+      font-size: 0.92rem;
+      line-height: 1.7;
+      margin-bottom: 18px;
+    }
+    .project-card__skills {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .skill-tag {
+      font-size: 0.78rem;
+      font-weight: 600;
+      padding: 4px 12px;
+      border-radius: 50px;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.1);
+      color: var(--clr-muted);
+    }
+
+    /* ===== Teaching Methods ===== */
+    .methods { padding: 100px 0; background: var(--clr-bg-card); }
+    .methods__grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 28px;
+    }
+    .method-card {
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.07);
+      border-radius: var(--radius);
+      padding: 36px 28px;
+      text-align: center;
+      transition: transform var(--transition), border-color var(--transition);
+    }
+    .method-card:hover { transform: translateY(-6px); border-color: rgba(108,99,255,0.4); }
+    .method-card__icon {
+      font-size: 3rem;
+      display: block;
+      margin-bottom: 20px;
+    }
+    .method-card__title {
+      font-size: 1.1rem;
+      font-weight: 700;
+      margin-bottom: 12px;
+    }
+    .method-card__desc {
+      color: var(--clr-muted);
+      font-size: 0.9rem;
+      line-height: 1.8;
+    }
+    .method-card__highlight {
+      display: inline-block;
+      margin-top: 16px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: var(--clr-accent);
+    }
+
+    /* ===== Target & Prerequisites ===== */
+    .target { padding: 100px 0; }
+    .target__inner {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 48px;
+    }
+    .target__box {
+      background: var(--clr-bg-card);
+      border: 1px solid rgba(255,255,255,0.07);
+      border-radius: var(--radius);
+      padding: 40px;
+    }
+    .target__box h3 {
+      font-size: 1.2rem;
+      font-weight: 700;
+      margin-bottom: 24px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .target__list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+    .target__list li {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      font-size: 0.92rem;
+      color: var(--clr-muted);
+      line-height: 1.6;
+    }
+    .target__list li::before {
+      content: '✓';
+      color: var(--clr-accent);
+      font-weight: 700;
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+    .prereq__alert {
+      margin-top: 24px;
+      background: rgba(245,158,11,0.1);
+      border: 1px solid rgba(245,158,11,0.35);
+      border-radius: 10px;
+      padding: 16px 20px;
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+    }
+    .prereq__alert-icon { font-size: 1.2rem; flex-shrink: 0; }
+    .prereq__alert-text { font-size: 0.88rem; color: #fde68a; line-height: 1.6; }
+    .prereq__alert-text strong { color: var(--clr-accent-warm); }
+
+    /* ===== CTA ===== */
+    .cta-banner { padding: 100px 0; }
+    .cta-banner__box {
+      background: linear-gradient(135deg, rgba(108,99,255,0.25) 0%, rgba(6,182,212,0.15) 100%);
+      border: 1px solid rgba(108,99,255,0.3);
+      border-radius: 24px;
+      padding: 72px 60px;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+    .cta-banner__box::before {
+      content: '';
+      position: absolute;
+      top: -60%;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 600px; height: 400px;
+      background: radial-gradient(ellipse, rgba(108,99,255,0.2) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .cta-banner__title {
+      font-size: clamp(1.8rem, 4vw, 2.8rem);
+      font-weight: 800;
+      margin-bottom: 1rem;
+      line-height: 1.2;
+    }
+    .cta-banner__title span {
+      background: linear-gradient(135deg, var(--clr-primary), var(--clr-accent));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .cta-banner__desc { color: var(--clr-muted); font-size: 1.05rem; margin-bottom: 2.4rem; }
+    .cta-banner__actions { display: flex; justify-content: center; gap: 16px; flex-wrap: wrap; }
+
+    /* ===== Footer ===== */
+    footer {
+      background: var(--clr-bg-card);
+      border-top: 1px solid rgba(255,255,255,0.06);
+      padding: 64px 0 32px;
+    }
+    .footer__grid {
+      display: grid;
+      grid-template-columns: 2fr 1fr 1fr 1fr;
+      gap: 48px;
+      margin-bottom: 48px;
+    }
+    .footer__brand p { color: var(--clr-muted); font-size: 0.9rem; line-height: 1.7; margin-top: 14px; }
+    .footer__col h4 { font-weight: 700; margin-bottom: 18px; font-size: 0.95rem; }
+    .footer__col ul { list-style: none; display: flex; flex-direction: column; gap: 10px; }
+    .footer__col ul a { color: var(--clr-muted); text-decoration: none; font-size: 0.9rem; transition: color var(--transition); }
+    .footer__col ul a:hover { color: #fff; }
+    .footer__bottom {
+      border-top: 1px solid rgba(255,255,255,0.06);
+      padding-top: 28px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 12px;
+      font-size: 0.85rem;
+      color: var(--clr-muted);
+    }
+
+    /* ===== Responsive ===== */
+    @media (max-width: 1024px) {
+      .roadmap__grid { grid-template-columns: repeat(2, 1fr); }
+      .projects__grid { grid-template-columns: 1fr; max-width: 520px; margin: 0 auto; }
+      .methods__grid { grid-template-columns: 1fr; max-width: 420px; margin: 0 auto; }
+      .target__inner { grid-template-columns: 1fr; }
+      .footer__grid { grid-template-columns: 1fr 1fr; }
+    }
+    @media (max-width: 768px) {
+      .nav__links, .nav__cta { display: none; }
+      .nav__hamburger { display: flex; }
+      .roadmap__grid { grid-template-columns: 1fr; max-width: 380px; margin: 0 auto; }
+      .cta-banner__box { padding: 48px 28px; }
+      .footer__grid { grid-template-columns: 1fr 1fr; }
+      .timeline { flex-direction: column; align-items: center; }
+      .timeline__item:not(:last-child)::after { content: '↓'; right: auto; bottom: -18px; top: auto; }
+      .timeline__item { padding-bottom: 36px; }
+    }
+    @media (max-width: 480px) {
+      .hero__meta { flex-direction: column; gap: 12px; }
+      .tabs { gap: 6px; }
+      .tab-btn { padding: 8px 16px; font-size: 0.85rem; }
+      thead th, tbody td { padding: 10px 12px; }
+      .footer__grid { grid-template-columns: 1fr; }
+      .cta-banner__actions { flex-direction: column; align-items: center; }
+      .cta-banner__actions .btn { width: 100%; justify-content: center; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ===== Navigation ===== -->
+  <nav class="nav" id="nav">
+    <div class="container nav__inner">
+      <a href="index.html" class="nav__logo">코드캠프</a>
+      <ul class="nav__links">
+        <li><a href="#roadmap">로드맵</a></li>
+        <li><a href="#curriculum" class="active">커리큘럼</a></li>
+        <li><a href="#methods">교육 방식</a></li>
+        <li><a href="#target">수강 대상</a></li>
+      </ul>
+      <a href="#cta" class="btn btn-primary nav__cta">수강 신청</a>
+      <button class="nav__hamburger" id="hamburger" aria-label="메뉴">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </nav>
+
+  <!-- Mobile Nav -->
+  <div class="nav__mobile" id="mobileNav">
+    <a href="index.html" data-mobile-link>홈으로</a>
+    <a href="#roadmap"    data-mobile-link>로드맵</a>
+    <a href="#curriculum" data-mobile-link>커리큘럼</a>
+    <a href="#methods"    data-mobile-link>교육 방식</a>
+    <a href="#target"     data-mobile-link>수강 대상</a>
+    <a href="#cta" class="btn btn-primary" data-mobile-link>수강 신청</a>
+  </div>
+
+  <!-- ===== Hero ===== -->
+  <section class="hero" id="hero">
+    <div class="hero__bg"></div>
+    <div class="hero__orb hero__orb--1"></div>
+    <div class="hero__orb hero__orb--2"></div>
+    <div class="container">
+      <div class="hero__content">
+        <div class="hero__badge badge reveal">ML 프로젝트 과정 — 상세 안내</div>
+        <h1 class="hero__title reveal reveal-delay-1">
+          <span>머신러닝 프로젝트</span>로<br>
+          데이터 분석가의<br>포트폴리오를 완성하세요
+        </h1>
+        <p class="hero__desc reveal reveal-delay-2">
+          고객 이탈 예측, 비만 단계 분석 등 실제 비즈니스 데이터로 4개의 프로젝트를 완성합니다.
+          메모장 코드 작성 방식으로 진짜 실력을 쌓고, GitHub 포트폴리오를 채워보세요.
+        </p>
+        <div class="hero__meta reveal reveal-delay-3">
+          <div class="hero__meta-item">📅 <strong>총 16주</strong> 과정</div>
+          <div class="hero__meta-item">🗂 <strong>프로젝트 4개</strong> 완성</div>
+          <div class="hero__meta-item">⌨️ <strong>메모장 코딩</strong> 방식</div>
+          <div class="hero__meta-item">💬 <strong>카카오 채팅</strong> 실시간 지원</div>
+        </div>
+        <div class="reveal reveal-delay-4">
+          <a href="#cta" class="btn btn-primary" style="font-size:1.05rem;padding:16px 40px">수강 신청하기 →</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== AI Evolution Timeline ===== -->
+  <section class="timeline-section" id="ai-evolution">
+    <div class="container">
+      <div class="badge reveal" style="display:block;width:fit-content;margin:0 auto 1rem;">AI의 진화</div>
+      <h2 class="section-title reveal">초기 AI에서 생성형 AI까지</h2>
+      <p class="section-sub reveal">이 과정은 머신러닝을 중심으로 AI 전체 흐름을 이해하는 데서 시작합니다</p>
+      <div class="timeline reveal">
+
+        <div class="timeline__item">
+          <div class="timeline__dot" style="background:rgba(255,255,255,0.05)">🧮</div>
+          <div class="timeline__era">1950s~1980s</div>
+          <div class="timeline__name">초기 AI</div>
+          <div class="timeline__desc">규칙 기반 전문가 시스템. 사람이 직접 규칙을 프로그래밍.</div>
+        </div>
+
+        <div class="timeline__item">
+          <div class="timeline__dot" style="background:rgba(108,99,255,0.15);border-color:rgba(108,99,255,0.4)">📊</div>
+          <div class="timeline__era">1990s~2010s</div>
+          <div class="timeline__name timeline__highlight">머신러닝</div>
+          <div class="timeline__desc">데이터로 패턴을 학습. 이 과정의 핵심 영역. 회귀·분류·군집.</div>
+        </div>
+
+        <div class="timeline__item">
+          <div class="timeline__dot" style="background:rgba(6,182,212,0.1);border-color:rgba(6,182,212,0.35)">🧠</div>
+          <div class="timeline__era">2010s~2020s</div>
+          <div class="timeline__name">딥러닝</div>
+          <div class="timeline__desc">신경망 기반 이미지·음성·자연어 처리. 대규모 데이터 필요.</div>
+        </div>
+
+        <div class="timeline__item">
+          <div class="timeline__dot" style="background:rgba(245,158,11,0.1);border-color:rgba(245,158,11,0.35)">✨</div>
+          <div class="timeline__era">2020s~현재</div>
+          <div class="timeline__name">생성형 AI</div>
+          <div class="timeline__desc">GPT·Claude·Gemini. 텍스트·이미지·코드 생성. ML 이해가 기반.</div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== 4-Step Roadmap ===== -->
+  <section class="roadmap" id="roadmap">
+    <div class="container">
+      <div class="badge reveal" style="display:block;width:fit-content;margin:0 auto 1rem;">4단계 로드맵</div>
+      <h2 class="section-title reveal">단계별로 쌓는 머신러닝 실력</h2>
+      <p class="section-sub reveal">각 단계는 독립 프로젝트로 완성되며, 전 단계가 다음 단계의 기초가 됩니다</p>
+      <div class="roadmap__grid">
+
+        <div class="step-card reveal">
+          <div class="step-card__number">STEP 1</div>
+          <span class="step-card__icon">📊</span>
+          <div class="step-card__title">데이터 분석 & 시각화</div>
+          <div class="step-card__goal">판다스·넘파이·맷플롯립으로 데이터를 탐색하고 인사이트를 시각화하는 EDA 역량 구축</div>
+          <div class="step-card__tags">
+            <span class="step-tag">Pandas</span>
+            <span class="step-tag">NumPy</span>
+            <span class="step-tag">Matplotlib</span>
+            <span class="step-tag">Seaborn</span>
+          </div>
+        </div>
+
+        <div class="step-card reveal reveal-delay-1">
+          <div class="step-card__number">STEP 2</div>
+          <span class="step-card__icon">🎯</span>
+          <div class="step-card__title">분류 모델 — 고객 이탈 예측</div>
+          <div class="step-card__goal">실제 통신사 데이터로 이탈 고객을 예측하는 분류 파이프라인 완성 및 모델 성능 비교</div>
+          <div class="step-card__tags">
+            <span class="step-tag">Logistic Reg</span>
+            <span class="step-tag">Decision Tree</span>
+            <span class="step-tag">SVM</span>
+            <span class="step-tag">Scikit-learn</span>
+          </div>
+        </div>
+
+        <div class="step-card reveal reveal-delay-2">
+          <div class="step-card__number">STEP 3</div>
+          <span class="step-card__icon">⚖️</span>
+          <div class="step-card__title">회귀 & 군집 — 비만 단계 분석</div>
+          <div class="step-card__goal">신체 데이터 기반 비만 단계 다중 분류와 K-Means 군집화로 건강 패턴 발견</div>
+          <div class="step-card__tags">
+            <span class="step-tag">Random Forest</span>
+            <span class="step-tag">K-Means</span>
+            <span class="step-tag">PCA</span>
+            <span class="step-tag">Cross-Val</span>
+          </div>
+        </div>
+
+        <div class="step-card reveal reveal-delay-3">
+          <div class="step-card__number">STEP 4</div>
+          <span class="step-card__icon">🚀</span>
+          <div class="step-card__title">앙상블 & 생성형 AI 연동</div>
+          <div class="step-card__goal">XGBoost·LightGBM으로 최고 성능 달성, 생성형 AI API로 분석 결과 자동 해석 서비스 완성</div>
+          <div class="step-card__tags">
+            <span class="step-tag">XGBoost</span>
+            <span class="step-tag">LightGBM</span>
+            <span class="step-tag">Optuna</span>
+            <span class="step-tag">AI API</span>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== Curriculum Tabs ===== -->
+  <section class="curriculum" id="curriculum">
+    <div class="container">
+      <div class="badge reveal" style="display:block;width:fit-content;margin:0 auto 1rem;">주차별 커리큘럼</div>
+      <h2 class="section-title reveal">프로젝트별 상세 커리큘럼</h2>
+      <p class="section-sub reveal">각 프로젝트는 4주 과정이며, 매주 이론 + 실습 + 과제로 구성됩니다</p>
+
+      <div class="tabs reveal">
+        <button class="tab-btn active" data-tab="p1">📊 프로젝트 1</button>
+        <button class="tab-btn" data-tab="p2">🎯 프로젝트 2</button>
+        <button class="tab-btn" data-tab="p3">⚖️ 프로젝트 3</button>
+        <button class="tab-btn" data-tab="p4">🚀 프로젝트 4</button>
+      </div>
+
+      <!-- 프로젝트 1 -->
+      <div class="tab-content active" id="tab-p1">
+        <div class="curriculum__table-wrap reveal">
+          <table>
+            <thead>
+              <tr>
+                <th>주차</th>
+                <th>강의 주제</th>
+                <th>주요 내용</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>1주</td>
+                <td>파이썬 데이터 분석 환경 구축</td>
+                <td>
+                  주피터 노트북 설치 및 설정, 판다스 DataFrame 기초, 데이터 불러오기 (CSV·Excel)
+                  <br><span class="topic-tag">실습: 공공데이터 포털 데이터 로딩</span>
+                </td>
+              </tr>
+              <tr>
+                <td>2주</td>
+                <td>탐색적 데이터 분석 (EDA)</td>
+                <td>
+                  결측값·이상값 탐지 및 처리, describe() / info() / value_counts(), 상관관계 분석
+                  <br><span class="topic-tag">실습: 타이타닉 데이터 EDA</span>
+                </td>
+              </tr>
+              <tr>
+                <td>3주</td>
+                <td>데이터 시각화</td>
+                <td>
+                  맷플롯립 기본 차트 (선·막대·산점도), 시본 히트맵·pairplot, 인사이트 스토리텔링
+                  <br><span class="topic-tag">실습: 판매 데이터 대시보드 제작</span>
+                </td>
+              </tr>
+              <tr>
+                <td>4주</td>
+                <td>프로젝트 1 완성 & 발표</td>
+                <td>
+                  데이터 전처리 파이프라인 정리, 분석 리포트 작성, GitHub 업로드, 코드 리뷰
+                  <br><span class="topic-tag">과제: 개인 데이터셋 EDA 리포트 제출</span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- 프로젝트 2 -->
+      <div class="tab-content" id="tab-p2">
+        <div class="curriculum__table-wrap reveal">
+          <table>
+            <thead>
+              <tr>
+                <th>주차</th>
+                <th>강의 주제</th>
+                <th>주요 내용</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>5주</td>
+                <td>머신러닝 개요 & 분류 기초</td>
+                <td>
+                  지도학습 vs 비지도학습, 훈련/검증/테스트 분리, 로지스틱 회귀 원리와 구현
+                  <br><span class="topic-tag">데이터: 텔레콤 고객 이탈 데이터셋</span>
+                </td>
+              </tr>
+              <tr>
+                <td>6주</td>
+                <td>의사결정 트리 & SVM</td>
+                <td>
+                  의사결정 트리 시각화 및 깊이 조절, SVM 커널 트릭 이해, 특성 중요도 분석
+                  <br><span class="topic-tag">실습: 3가지 모델 성능 비교표 작성</span>
+                </td>
+              </tr>
+              <tr>
+                <td>7주</td>
+                <td>모델 평가 & 하이퍼파라미터 튜닝</td>
+                <td>
+                  정밀도·재현율·F1·ROC-AUC, 혼동 행렬 해석, GridSearchCV로 최적 파라미터 탐색
+                  <br><span class="topic-tag">실습: 이탈 고객 예측 모델 최적화</span>
+                </td>
+              </tr>
+              <tr>
+                <td>8주</td>
+                <td>프로젝트 2 완성 & 발표</td>
+                <td>
+                  전처리 → 모델링 → 평가 파이프라인 완성, 비즈니스 인사이트 도출, GitHub 포트폴리오 정리
+                  <br><span class="topic-tag">과제: 이탈 고객 감소 전략 보고서 제출</span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- 프로젝트 3 -->
+      <div class="tab-content" id="tab-p3">
+        <div class="curriculum__table-wrap reveal">
+          <table>
+            <thead>
+              <tr>
+                <th>주차</th>
+                <th>강의 주제</th>
+                <th>주요 내용</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>9주</td>
+                <td>랜덤 포레스트 & 앙상블 입문</td>
+                <td>
+                  배깅 원리, 랜덤 포레스트 구조 및 구현, 특성 중요도로 변수 선택
+                  <br><span class="topic-tag">데이터: 비만도 분류 데이터셋 (WHO 기준)</span>
+                </td>
+              </tr>
+              <tr>
+                <td>10주</td>
+                <td>다중 분류 & 클래스 불균형</td>
+                <td>
+                  다중 클래스 분류 전략 (OvR / OvO), SMOTE 오버샘플링, 클래스 가중치 조정
+                  <br><span class="topic-tag">실습: 비만 단계 5단계 분류 모델 구축</span>
+                </td>
+              </tr>
+              <tr>
+                <td>11주</td>
+                <td>군집 분석 (K-Means & PCA)</td>
+                <td>
+                  K-Means 알고리즘 원리, 엘보우 기법으로 최적 K 선정, PCA로 2D 군집 시각화
+                  <br><span class="topic-tag">실습: 건강 데이터 군집별 특징 분석</span>
+                </td>
+              </tr>
+              <tr>
+                <td>12주</td>
+                <td>프로젝트 3 완성 & 발표</td>
+                <td>
+                  분류 + 군집 복합 분석, 건강 위험군 식별 보고서, 교차 검증으로 일반화 성능 확인
+                  <br><span class="topic-tag">과제: 비만 예방 정책 제안 데이터 보고서</span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- 프로젝트 4 -->
+      <div class="tab-content" id="tab-p4">
+        <div class="curriculum__table-wrap reveal">
+          <table>
+            <thead>
+              <tr>
+                <th>주차</th>
+                <th>강의 주제</th>
+                <th>주요 내용</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>13주</td>
+                <td>XGBoost & LightGBM</td>
+                <td>
+                  부스팅 원리 (Boosting vs Bagging), XGBoost 파라미터 이해, LightGBM 빠른 학습 원리
+                  <br><span class="topic-tag">실습: 이전 프로젝트 데이터로 앙상블 성능 비교</span>
+                </td>
+              </tr>
+              <tr>
+                <td>14주</td>
+                <td>Optuna 하이퍼파라미터 최적화</td>
+                <td>
+                  베이지안 최적화 원리, Optuna 스터디 설정 및 시각화, 조기 종료 콜백으로 과적합 방지
+                  <br><span class="topic-tag">실습: LightGBM + Optuna 자동 튜닝 파이프라인</span>
+                </td>
+              </tr>
+              <tr>
+                <td>15주</td>
+                <td>생성형 AI API 연동</td>
+                <td>
+                  OpenAI / Claude API 기초, 머신러닝 결과를 프롬프트로 변환, 분석 결과 자동 해석 시스템 구축
+                  <br><span class="topic-tag">실습: 고객 이탈 분석 결과 → AI 해석 리포트 자동 생성</span>
+                </td>
+              </tr>
+              <tr>
+                <td>16주</td>
+                <td>최종 프로젝트 발표 & 포트폴리오 완성</td>
+                <td>
+                  4개 프로젝트 GitHub 정리, README 작성, 최종 발표, 강사 코드 리뷰 및 피드백
+                  <br><span class="topic-tag">결과물: 취업용 ML 포트폴리오 GitHub 저장소 완성</span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== Project Examples ===== -->
+  <section class="projects" id="projects">
+    <div class="container">
+      <div class="badge reveal" style="display:block;width:fit-content;margin:0 auto 1rem;">프로젝트 예시</div>
+      <h2 class="section-title reveal">이런 프로젝트를 완성합니다</h2>
+      <p class="section-sub reveal">실제 비즈니스 데이터로 만드는 포트폴리오급 프로젝트</p>
+      <div class="projects__grid">
+
+        <!-- 고객 이탈 예측 -->
+        <div class="project-card reveal">
+          <div class="project-card__preview project-card__preview--churn">
+            <div class="project-card__mockup">
+              <div class="mockup__title">고객 이탈 예측 — 모델 비교</div>
+              <div class="mockup__bar-row">
+                <div class="mockup__bar-label">Logistic Reg</div>
+                <div class="mockup__bar-track"><div class="mockup__bar-fill mockup__bar-fill--blue" style="width:76%"></div></div>
+                <span style="font-size:0.7rem;color:#94a3b8;margin-left:6px">76%</span>
+              </div>
+              <div class="mockup__bar-row">
+                <div class="mockup__bar-label">Decision Tree</div>
+                <div class="mockup__bar-track"><div class="mockup__bar-fill mockup__bar-fill--green" style="width:83%"></div></div>
+                <span style="font-size:0.7rem;color:#94a3b8;margin-left:6px">83%</span>
+              </div>
+              <div class="mockup__bar-row">
+                <div class="mockup__bar-label">XGBoost</div>
+                <div class="mockup__bar-track"><div class="mockup__bar-fill mockup__bar-fill--blue" style="width:91%"></div></div>
+                <span style="font-size:0.7rem;color:#94a3b8;margin-left:6px">91%</span>
+              </div>
+            </div>
+          </div>
+          <div class="project-card__body">
+            <div class="project-card__step">STEP 2 · 4</div>
+            <h3 class="project-card__title">고객 이탈 예측 모델</h3>
+            <p class="project-card__desc">통신사 고객 7,000건 데이터로 이탈 가능성을 예측합니다. 여러 분류 알고리즘을 비교하고 XGBoost로 91% 정확도를 달성하며, 이탈 위험 고객의 주요 특징을 시각화합니다.</p>
+            <div class="project-card__skills">
+              <span class="skill-tag">Pandas</span>
+              <span class="skill-tag">Scikit-learn</span>
+              <span class="skill-tag">XGBoost</span>
+              <span class="skill-tag">Matplotlib</span>
+              <span class="skill-tag">ROC-AUC</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 비만 단계 분석 -->
+        <div class="project-card reveal reveal-delay-1">
+          <div class="project-card__preview project-card__preview--obesity">
+            <div class="project-card__mockup">
+              <div class="mockup__title">비만 단계 분류 결과</div>
+              <div class="mockup__bar-row">
+                <div class="mockup__bar-label">저체중</div>
+                <div class="mockup__bar-track"><div class="mockup__bar-fill mockup__bar-fill--blue" style="width:18%"></div></div>
+                <span style="font-size:0.7rem;color:#94a3b8;margin-left:6px">18%</span>
+              </div>
+              <div class="mockup__bar-row">
+                <div class="mockup__bar-label">정상체중</div>
+                <div class="mockup__bar-track"><div class="mockup__bar-fill mockup__bar-fill--green" style="width:35%"></div></div>
+                <span style="font-size:0.7rem;color:#94a3b8;margin-left:6px">35%</span>
+              </div>
+              <div class="mockup__bar-row">
+                <div class="mockup__bar-label">과체중·비만</div>
+                <div class="mockup__bar-track"><div class="mockup__bar-fill mockup__bar-fill--amber" style="width:47%"></div></div>
+                <span style="font-size:0.7rem;color:#94a3b8;margin-left:6px">47%</span>
+              </div>
+            </div>
+          </div>
+          <div class="project-card__body">
+            <div class="project-card__step">STEP 3</div>
+            <h3 class="project-card__title">비만 단계 분석 모델</h3>
+            <p class="project-card__desc">WHO 기준 비만도 데이터 2,100건으로 5단계 비만 분류 모델을 구축합니다. 랜덤 포레스트와 K-Means 군집화를 결합해 건강 위험군을 식별하고, PCA 시각화로 군집 특징을 분석합니다.</p>
+            <div class="project-card__skills">
+              <span class="skill-tag">Random Forest</span>
+              <span class="skill-tag">K-Means</span>
+              <span class="skill-tag">PCA</span>
+              <span class="skill-tag">SMOTE</span>
+              <span class="skill-tag">Seaborn</span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== Teaching Methods ===== -->
+  <section class="methods" id="methods">
+    <div class="container">
+      <div class="badge reveal" style="display:block;width:fit-content;margin:0 auto 1rem;">강의 운영 방식</div>
+      <h2 class="section-title reveal">3가지 방식으로 빈틈없이</h2>
+      <p class="section-sub reveal">강의실, 채팅, 과제 — 모든 접점에서 성장을 지원합니다</p>
+      <div class="methods__grid">
+
+        <div class="method-card reveal">
+          <span class="method-card__icon">⌨️</span>
+          <div class="method-card__title">메모장 코드 직접 작성</div>
+          <div class="method-card__desc">
+            IDE 자동완성 없이 메모장에 한 줄씩 직접 타이핑합니다.
+            에러를 만나고, 읽고, 고치는 반복이 실력의 원천입니다.
+            강의 중 강사도 함께 메모장에 코드를 작성하며 라이브 코딩으로 진행합니다.
+          </div>
+          <span class="method-card__highlight">복사·붙여넣기 금지 원칙</span>
+        </div>
+
+        <div class="method-card reveal reveal-delay-1">
+          <span class="method-card__icon">💬</span>
+          <div class="method-card__title">카카오 오픈채팅방 지원</div>
+          <div class="method-card__desc">
+            수강 기간 내내 개설된 카카오 오픈채팅방에서 질문하세요.
+            강의 중 막힌 부분, 과제 중 궁금한 점, 에러 메시지 — 모두 환영합니다.
+            강사와 이전 수강생들이 함께 답변하는 커뮤니티입니다.
+          </div>
+          <span class="method-card__highlight">평균 응답 시간 1시간 이내</span>
+        </div>
+
+        <div class="method-card reveal reveal-delay-2">
+          <span class="method-card__icon">📋</span>
+          <div class="method-card__title">구글 클래스룸 과제</div>
+          <div class="method-card__desc">
+            매 강의 후 구글 클래스룸에 실습 과제가 업로드됩니다.
+            코드를 제출하면 강사가 직접 줄별 코멘트로 피드백을 남겨드립니다.
+            과제 피드백이 쌓이면 나만의 코드 개선 히스토리가 됩니다.
+          </div>
+          <span class="method-card__highlight">강사 직접 코드 리뷰 제공</span>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== Target & Prerequisites ===== -->
+  <section class="target" id="target">
+    <div class="container">
+      <div class="badge reveal" style="display:block;width:fit-content;margin:0 auto 1rem;">수강 대상 & 선행 과정</div>
+      <h2 class="section-title reveal">이런 분께 맞는 과정입니다</h2>
+      <p class="section-sub reveal">수강 전 아래 내용을 확인해 주세요</p>
+      <div class="target__inner">
+
+        <div class="target__box reveal">
+          <h3>🙋 수강 대상</h3>
+          <ul class="target__list">
+            <li>파이썬 기초를 배웠지만 실제로 뭔가 만들어본 경험이 없는 분</li>
+            <li>데이터 분석·AI 직무로 전환을 준비 중인 직장인</li>
+            <li>포트폴리오에 ML 프로젝트를 추가하고 싶은 취준생</li>
+            <li>실무에서 데이터를 다루는 기획자·마케터로 분석 역량을 키우고 싶은 분</li>
+            <li>캐글 또는 데이콘 입문을 목표로 하는 분</li>
+            <li>생성형 AI를 단순 사용이 아닌 개발 관점에서 이해하고 싶은 분</li>
+          </ul>
+        </div>
+
+        <div class="target__box reveal reveal-delay-1">
+          <h3>📚 선행 과정 안내</h3>
+          <ul class="target__list">
+            <li>파이썬 변수, 자료형(리스트·딕셔너리·튜플) 이해</li>
+            <li>조건문(if) / 반복문(for·while) 작성 가능</li>
+            <li>함수(def) 정의 및 호출 경험</li>
+            <li>파일 읽기·쓰기 기본 조작 경험</li>
+            <li>클래스와 객체 개념 이해 (심화 불필요)</li>
+          </ul>
+          <div class="prereq__alert">
+            <span class="prereq__alert-icon">⚠️</span>
+            <div class="prereq__alert-text">
+              위 내용이 아직 낯설다면 <strong>AI 파이썬 1 · 2 · 3 선행 과정</strong>을 먼저 이수하시기를 강력히 권장합니다.
+              선행 없이 수강 시 ML 프로젝트 진도를 따라가기 어렵습니다.
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== CTA ===== -->
+  <section class="cta-banner" id="cta">
+    <div class="container">
+      <div class="cta-banner__box reveal">
+        <h2 class="cta-banner__title">
+          지금 바로<br>
+          <span>무료 상담 신청</span>하세요
+        </h2>
+        <p class="cta-banner__desc">커리큘럼, 선행 과정, 수강료 등 궁금한 것은 무엇이든 물어보세요. 강사가 직접 상담합니다.</p>
+        <div class="cta-banner__actions">
+          <a href="tel:02-000-0000" class="btn btn-primary" style="font-size:1.05rem;padding:16px 40px">무료 상담 전화하기 →</a>
+          <a href="index.html" class="btn btn-outline">홈으로 돌아가기</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== Footer ===== -->
+  <footer>
+    <div class="container">
+      <div class="footer__grid">
+        <div class="footer__brand">
+          <a href="index.html" class="nav__logo" style="font-size:1.3rem;font-weight:800;">코드캠프</a>
+          <p>메모장 코드 작성으로 실력을 키우는 AI·머신러닝 아카데미.<br>데이터로 말하는 개발자를 만듭니다.</p>
+        </div>
+        <div class="footer__col">
+          <h4>강좌</h4>
+          <ul>
+            <li><a href="courses.html">ML 프로젝트 과정</a></li>
+            <li><a href="#">AI 파이썬 1·2·3</a></li>
+            <li><a href="#">딥러닝 과정</a></li>
+            <li><a href="#">생성형AI 활용</a></li>
+          </ul>
+        </div>
+        <div class="footer__col">
+          <h4>회사</h4>
+          <ul>
+            <li><a href="#">소개</a></li>
+            <li><a href="#">블로그</a></li>
+            <li><a href="#">채용</a></li>
+            <li><a href="#">파트너십</a></li>
+          </ul>
+        </div>
+        <div class="footer__col">
+          <h4>지원</h4>
+          <ul>
+            <li><a href="#">고객센터</a></li>
+            <li><a href="#">FAQ</a></li>
+            <li><a href="#">이용약관</a></li>
+            <li><a href="#">개인정보처리방침</a></li>
+          </ul>
+        </div>
+      </div>
+      <div class="footer__bottom">
+        <span>© 2026 코드캠프. All rights reserved.</span>
+        <span>사업자등록번호: 123-45-67890 | 대표: 홍길동 | 서울특별시 강남구 테헤란로 123</span>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    /* ===== Navbar scroll state ===== */
+    const nav = document.getElementById('nav');
+    window.addEventListener('scroll', () => {
+      nav.classList.toggle('scrolled', window.scrollY > 50);
+    }, { passive: true });
+
+    /* ===== Hamburger / mobile nav ===== */
+    const hamburger = document.getElementById('hamburger');
+    const mobileNav = document.getElementById('mobileNav');
+    hamburger.addEventListener('click', () => {
+      const isOpen = mobileNav.classList.toggle('open');
+      hamburger.classList.toggle('active', isOpen);
+      document.body.style.overflow = isOpen ? 'hidden' : '';
+    });
+    document.querySelectorAll('[data-mobile-link]').forEach(el => {
+      el.addEventListener('click', () => {
+        mobileNav.classList.remove('open');
+        hamburger.classList.remove('active');
+        document.body.style.overflow = '';
+      });
+    });
+
+    /* ===== Smooth scroll (80px offset) ===== */
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+      anchor.addEventListener('click', e => {
+        const target = document.querySelector(anchor.getAttribute('href'));
+        if (!target) return;
+        e.preventDefault();
+        const offset = 80;
+        const top = target.getBoundingClientRect().top + window.scrollY - offset;
+        window.scrollTo({ top, behavior: 'smooth' });
+      });
+    });
+
+    /* ===== Scroll reveal ===== */
+    const revealObserver = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('visible');
+          revealObserver.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.1 });
+    document.querySelectorAll('.reveal').forEach(el => revealObserver.observe(el));
+
+    /* ===== Curriculum Tab switching ===== */
+    const tabBtns = document.querySelectorAll('.tab-btn');
+    const tabContents = document.querySelectorAll('.tab-content');
+
+    tabBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const target = btn.dataset.tab;
+
+        tabBtns.forEach(b => b.classList.remove('active'));
+        tabContents.forEach(c => c.classList.remove('active'));
+
+        btn.classList.add('active');
+        const targetContent = document.getElementById('tab-' + target);
+        if (targetContent) {
+          targetContent.classList.add('active');
+          // 탭 전환 시 새로 보이는 .reveal 요소 재트리거
+          targetContent.querySelectorAll('.reveal:not(.visible)').forEach(el => {
+            revealObserver.observe(el);
+          });
+        }
+      });
+    });
+
+    /* ===== URL hash로 커리큘럼 섹션 바로 스크롤 ===== */
+    if (window.location.hash === '#curriculum') {
+      setTimeout(() => {
+        const el = document.getElementById('curriculum');
+        if (el) {
+          const top = el.getBoundingClientRect().top + window.scrollY - 80;
+          window.scrollTo({ top, behavior: 'smooth' });
+        }
+      }, 300);
+    }
+  </script>
+</body>
+</html>

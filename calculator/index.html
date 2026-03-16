@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Calculator 3D</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: radial-gradient(ellipse at 60% 30%, #1a1040 0%, #0a0a18 60%, #000 100%);
+      font-family: 'Inter', 'Segoe UI', sans-serif;
+      perspective: 1200px;
+    }
+
+    /* 3D scene wrapper */
+    .scene {
+      transform: rotateX(6deg) rotateY(-4deg);
+      transform-style: preserve-3d;
+      filter: drop-shadow(0 40px 80px rgba(80, 40, 200, 0.35));
+      transition: transform 0.3s ease;
+    }
+
+    .scene:hover {
+      transform: rotateX(2deg) rotateY(0deg);
+    }
+
+    .calculator {
+      width: 320px;
+      background: linear-gradient(160deg, #2a2a3e 0%, #1a1a2e 60%, #141420 100%);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 20px;
+      overflow: hidden;
+      position: relative;
+
+      /* Side depth illusion */
+      box-shadow:
+        /* right side face */
+        6px 6px 0 #0d0d1a,
+        7px 7px 0 #0a0a14,
+        8px 8px 0 #080810,
+        /* bottom side face */
+        8px 12px 0 #0a0a14,
+        /* main ambient shadow */
+        16px 24px 60px rgba(0,0,0,0.8),
+        0 0 40px rgba(100, 80, 255, 0.08);
+    }
+
+    /* Top highlight edge */
+    .calculator::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent);
+    }
+
+    /* Display */
+    .display {
+      padding: 28px 24px 22px;
+      background: linear-gradient(180deg, #111120 0%, #0e0e1c 100%);
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+      position: relative;
+      box-shadow: inset 0 -4px 12px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.04);
+    }
+
+    /* Screen glare */
+    .display::after {
+      content: '';
+      position: absolute;
+      top: 0; left: 0;
+      width: 60%;
+      height: 100%;
+      background: linear-gradient(135deg, rgba(255,255,255,0.03) 0%, transparent 60%);
+      pointer-events: none;
+    }
+
+    .display .expression {
+      font-size: 13px;
+      color: #5a5a8a;
+      text-align: right;
+      min-height: 18px;
+      letter-spacing: 0.5px;
+      margin-bottom: 10px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .display .result {
+      font-size: 42px;
+      font-weight: 200;
+      color: #e8e8ff;
+      text-align: right;
+      letter-spacing: -1.5px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      text-shadow: 0 0 20px rgba(150, 120, 255, 0.4);
+    }
+
+    /* Buttons Grid */
+    .buttons {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+      padding: 16px;
+      background: transparent;
+    }
+
+    button {
+      padding: 18px 0;
+      font-size: 16px;
+      font-weight: 500;
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      position: relative;
+      transition: transform 0.08s ease, box-shadow 0.08s ease;
+      letter-spacing: 0.3px;
+      transform-style: preserve-3d;
+    }
+
+    /* 3D press effect */
+    button:active {
+      transform: translateY(3px) translateX(1px);
+    }
+
+    /* Default number button */
+    .btn-default {
+      background: linear-gradient(160deg, #2e2e48 0%, #22223a 100%);
+      color: #c8c8e8;
+      box-shadow:
+        0 6px 0 #0e0e20,
+        0 8px 16px rgba(0,0,0,0.5),
+        inset 0 1px 0 rgba(255,255,255,0.08),
+        inset 0 -1px 0 rgba(0,0,0,0.3);
+      border: 1px solid rgba(255,255,255,0.06);
+    }
+
+    .btn-default:hover {
+      background: linear-gradient(160deg, #363658 0%, #282844 100%);
+      box-shadow:
+        0 6px 0 #0e0e20,
+        0 10px 20px rgba(0,0,0,0.5),
+        inset 0 1px 0 rgba(255,255,255,0.1),
+        inset 0 -1px 0 rgba(0,0,0,0.3);
+      transform: translateY(-1px);
+    }
+
+    .btn-default:active {
+      box-shadow:
+        0 2px 0 #0e0e20,
+        0 4px 8px rgba(0,0,0,0.5),
+        inset 0 1px 0 rgba(0,0,0,0.2),
+        inset 0 2px 6px rgba(0,0,0,0.3);
+      transform: translateY(4px) translateX(1px);
+    }
+
+    /* Operator button */
+    .btn-operator {
+      background: linear-gradient(160deg, #302860 0%, #221e4a 100%);
+      color: #a090ff;
+      box-shadow:
+        0 6px 0 #100c2e,
+        0 8px 16px rgba(80,40,200,0.3),
+        inset 0 1px 0 rgba(255,255,255,0.1),
+        inset 0 -1px 0 rgba(0,0,0,0.4);
+      border: 1px solid rgba(120,100,255,0.15);
+    }
+
+    .btn-operator:hover {
+      background: linear-gradient(160deg, #3a3270 0%, #2a265a 100%);
+      box-shadow:
+        0 6px 0 #100c2e,
+        0 12px 24px rgba(80,40,200,0.35),
+        inset 0 1px 0 rgba(255,255,255,0.12),
+        inset 0 -1px 0 rgba(0,0,0,0.4);
+      transform: translateY(-1px);
+      color: #b8aaff;
+    }
+
+    .btn-operator:active {
+      box-shadow:
+        0 2px 0 #100c2e,
+        0 4px 8px rgba(80,40,200,0.3),
+        inset 0 2px 6px rgba(0,0,0,0.4);
+      transform: translateY(4px) translateX(1px);
+    }
+
+    /* Function button */
+    .btn-function {
+      background: linear-gradient(160deg, #252538 0%, #1c1c2e 100%);
+      color: #7878a8;
+      box-shadow:
+        0 6px 0 #0a0a18,
+        0 8px 16px rgba(0,0,0,0.5),
+        inset 0 1px 0 rgba(255,255,255,0.06),
+        inset 0 -1px 0 rgba(0,0,0,0.3);
+      border: 1px solid rgba(255,255,255,0.04);
+    }
+
+    .btn-function:hover {
+      background: linear-gradient(160deg, #2e2e45 0%, #242438 100%);
+      transform: translateY(-1px);
+      color: #9090c0;
+    }
+
+    .btn-function:active {
+      box-shadow:
+        0 2px 0 #0a0a18,
+        0 4px 8px rgba(0,0,0,0.5),
+        inset 0 2px 6px rgba(0,0,0,0.3);
+      transform: translateY(4px) translateX(1px);
+    }
+
+    /* Equal button */
+    .btn-equal {
+      background: linear-gradient(160deg, #8b78ff 0%, #6a55ee 50%, #5540d0 100%);
+      color: #fff;
+      box-shadow:
+        0 6px 0 #2a1890,
+        0 8px 24px rgba(100, 70, 255, 0.5),
+        inset 0 1px 0 rgba(255,255,255,0.25),
+        inset 0 -1px 0 rgba(0,0,0,0.2);
+      border: 1px solid rgba(150,120,255,0.3);
+      font-weight: 600;
+      text-shadow: 0 1px 4px rgba(0,0,0,0.3);
+    }
+
+    .btn-equal:hover {
+      background: linear-gradient(160deg, #9e8cff 0%, #7a66f0 50%, #6550dc 100%);
+      box-shadow:
+        0 6px 0 #2a1890,
+        0 14px 32px rgba(100, 70, 255, 0.6),
+        inset 0 1px 0 rgba(255,255,255,0.3),
+        inset 0 -1px 0 rgba(0,0,0,0.2);
+      transform: translateY(-1px);
+    }
+
+    .btn-equal:active {
+      box-shadow:
+        0 2px 0 #2a1890,
+        0 6px 16px rgba(100, 70, 255, 0.4),
+        inset 0 2px 8px rgba(0,0,0,0.3);
+      transform: translateY(4px) translateX(1px);
+    }
+
+    /* Zero button */
+    .btn-zero {
+      grid-column: span 2;
+      text-align: left;
+      padding-left: 28px;
+    }
+
+    /* Active operator */
+    button.active-op {
+      background: linear-gradient(160deg, #4a3a90 0%, #352a70 100%);
+      color: #d0c0ff;
+      box-shadow:
+        0 3px 0 #100c2e,
+        0 6px 20px rgba(80,40,200,0.4),
+        inset 0 2px 6px rgba(0,0,0,0.4);
+      transform: translateY(3px);
+    }
+  </style>
+</head>
+<body>
+  <div class="scene">
+    <div class="calculator">
+      <div class="display">
+        <div class="expression" id="expression"></div>
+        <div class="result" id="result">0</div>
+      </div>
+      <div class="buttons">
+        <!-- Row 1 -->
+        <button class="btn-function" onclick="clearAll()">AC</button>
+        <button class="btn-function" onclick="toggleSign()">+/-</button>
+        <button class="btn-function" onclick="percent()">%</button>
+        <button class="btn-operator" id="op-/" onclick="setOperator('/')">÷</button>
+
+        <!-- Row 2 -->
+        <button class="btn-default" onclick="appendNumber('7')">7</button>
+        <button class="btn-default" onclick="appendNumber('8')">8</button>
+        <button class="btn-default" onclick="appendNumber('9')">9</button>
+        <button class="btn-operator" id="op-*" onclick="setOperator('*')">×</button>
+
+        <!-- Row 3 -->
+        <button class="btn-default" onclick="appendNumber('4')">4</button>
+        <button class="btn-default" onclick="appendNumber('5')">5</button>
+        <button class="btn-default" onclick="appendNumber('6')">6</button>
+        <button class="btn-operator" id="op--" onclick="setOperator('-')">−</button>
+
+        <!-- Row 4 -->
+        <button class="btn-default" onclick="appendNumber('1')">1</button>
+        <button class="btn-default" onclick="appendNumber('2')">2</button>
+        <button class="btn-default" onclick="appendNumber('3')">3</button>
+        <button class="btn-operator" id="op-+" onclick="setOperator('+')">+</button>
+
+        <!-- Row 5 -->
+        <button class="btn-default btn-zero" onclick="appendNumber('0')">0</button>
+        <button class="btn-default" onclick="appendDot()">.</button>
+        <button class="btn-equal" onclick="calculate()">=</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let current = '0';
+    let previous = '';
+    let operator = null;
+    let shouldReset = false;
+
+    const resultEl = document.getElementById('result');
+    const expressionEl = document.getElementById('expression');
+
+    function updateDisplay() {
+      resultEl.textContent = current;
+    }
+
+    function clearAll() {
+      current = '0';
+      previous = '';
+      operator = null;
+      shouldReset = false;
+      expressionEl.textContent = '';
+      clearActiveOp();
+      updateDisplay();
+    }
+
+    function appendNumber(num) {
+      if (shouldReset) {
+        current = num;
+        shouldReset = false;
+      } else {
+        current = current === '0' ? num : current + num;
+      }
+      if (current.length > 12) current = current.slice(0, 12);
+      updateDisplay();
+    }
+
+    function appendDot() {
+      if (shouldReset) {
+        current = '0.';
+        shouldReset = false;
+      } else if (!current.includes('.')) {
+        current += '.';
+      }
+      updateDisplay();
+    }
+
+    function toggleSign() {
+      current = String(parseFloat(current) * -1);
+      updateDisplay();
+    }
+
+    function percent() {
+      current = String(parseFloat(current) / 100);
+      updateDisplay();
+    }
+
+    function setOperator(op) {
+      if (operator && !shouldReset) calculate(true);
+      previous = current;
+      operator = op;
+      shouldReset = true;
+      expressionEl.textContent = previous + ' ' + opSymbol(op);
+      highlightOp(op);
+    }
+
+    function calculate(chain = false) {
+      if (!operator || previous === '') return;
+      const a = parseFloat(previous);
+      const b = parseFloat(current);
+      let res;
+      switch (operator) {
+        case '+': res = a + b; break;
+        case '-': res = a - b; break;
+        case '*': res = a * b; break;
+        case '/': res = b !== 0 ? a / b : 'Error'; break;
+      }
+      if (!chain) {
+        expressionEl.textContent = previous + ' ' + opSymbol(operator) + ' ' + current + ' =';
+        operator = null;
+        clearActiveOp();
+      }
+      current = res === 'Error' ? 'Error' : String(parseFloat(res.toFixed(10)));
+      shouldReset = true;
+      updateDisplay();
+    }
+
+    function opSymbol(op) {
+      return { '+': '+', '-': '−', '*': '×', '/': '÷' }[op] || op;
+    }
+
+    function highlightOp(op) {
+      clearActiveOp();
+      const el = document.getElementById('op-' + op);
+      if (el) el.classList.add('active-op');
+    }
+
+    function clearActiveOp() {
+      document.querySelectorAll('.btn-operator').forEach(b => b.classList.remove('active-op'));
+    }
+
+    // Mouse tilt effect
+    const scene = document.querySelector('.scene');
+    document.addEventListener('mousemove', (e) => {
+      const cx = window.innerWidth / 2;
+      const cy = window.innerHeight / 2;
+      const dx = (e.clientX - cx) / cx;
+      const dy = (e.clientY - cy) / cy;
+      scene.style.transform = `rotateX(${6 - dy * 5}deg) rotateY(${-4 + dx * 5}deg)`;
+    });
+
+    document.addEventListener('mouseleave', () => {
+      scene.style.transform = 'rotateX(6deg) rotateY(-4deg)';
+    });
+  </script>
+</body>
+</html>
